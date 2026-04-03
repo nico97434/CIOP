@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur CIOP - Nicolas INCANA</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            min-height: 100vh;
+            padding: 16px;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .header-icon {
+            width: 48px;
+            height: 48px;
+            background: #1E5631;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        .header h1 { font-size: 22px; color: #1a1a2e; }
+        .header p { font-size: 13px; color: #666; }
+        
+        .verdict-box {
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+        .verdict-emoji { font-size: 36px; margin-bottom: 4px; }
+        .verdict-text { font-size: 28px; font-weight: 700; }
+        .verdict-score { font-size: 14px; color: #666; margin-top: 4px; }
+        .gain-label { font-size: 13px; color: #666; }
+        .gain-value { font-size: 32px; font-weight: 700; }
+        .roi-value { font-size: 13px; color: #666; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 500px) { .grid { grid-template-columns: 1fr; } }
+        
+        .input-group { margin-bottom: 12px; }
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #1E5631;
+        }
+        
+        .ciop-box {
+            background: linear-gradient(135deg, #1E5631 0%, #2d7a46 100%);
+            color: white;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .ciop-header { display: flex; justify-content: space-between; align-items: center; }
+        .ciop-label { font-size: 13px; opacity: 0.85; }
+        .ciop-value { font-size: 26px; font-weight: 700; }
+        .ciop-sub { font-size: 12px; opacity: 0.75; margin-top: 8px; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+        @media (min-width: 500px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+        .stat-box {
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+        }
+        .stat-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+        .stat-value { font-size: 18px; font-weight: 600; }
+        .stat-sub { font-size: 10px; color: #888; margin-top: 2px; }
+        
+        .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .finance-table {
+            width: 100%;
+            font-size: 13px;
+        }
+        .finance-table tr {
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .finance-table td {
+            padding: 10px 0;
+        }
+        .finance-table td:last-child {
+            text-align: right;
+            font-weight: 500;
+        }
+        .text-success { color: #27ae60; }
+        .text-danger { color: #e74c3c; }
+        .text-warning { color: #f39c12; }
+        .text-info { color: #3498db; }
+        
+        .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+        .result-box {
+            border-radius: 14px;
+            padding: 16px;
+            text-align: center;
+        }
+        .result-box.primary { background: #1E5631; color: white; }
+        .result-box.secondary { background: #f5f5f5; }
+        .result-label { font-size: 12px; opacity: 0.8; }
+        .result-value { font-size: 28px; font-weight: 700; margin: 4px 0; }
+        .result-sub { font-size: 11px; opacity: 0.7; }
+        
+        .conseils { margin-top: 16px; }
+        .conseil {
+            padding: 10px 0;
+            font-size: 13px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .conseil:last-child { border-bottom: none; }
+        
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            margin-top: 20px;
+            padding: 10px;
+        }
+        
+        .btn-reset {
+            background: #f5f5f5;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+        .btn-reset:hover { background: #e8e8e8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <div class="header-icon">🏠</div>
+                <div>
+                    <h1>Simulateur CIOP</h1>
+                    <p>Évalue si un bien est rentable pour ton investissement</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="verdict-box" id="verdict-box">
+            <div>
+                <div class="verdict-emoji" id="verdict-emoji">🚀</div>
+                <div class="verdict-text" id="verdict-text">EXCELLENT</div>
+                <div class="verdict-score" id="verdict-score">Score: 85/100</div>
+            </div>
+            <div style="text-align: right;">
+                <div class="gain-label">Tu gagnes (65%)</div>
+                <div class="gain-value" id="gain-nicolas">38 245 €</div>
+                <div class="roi-value" id="roi-display">ROI: 589%</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">📝 Caractéristiques du bien</div>
+            <div class="grid">
+                <div class="input-group">
+                    <label>Prix d'achat (€)</label>
+                    <input type="number" id="prix" value="190000" min="50000" max="500000" step="5000" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Surface habitable (m²)</label>
+                    <input type="number" id="surface" value="50" min="20" max="150" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Varangue (m²)</label>
+                    <input type="number" id="varangue" value="14" min="0" max="20" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Loyer mensuel (€)</label>
+                    <input type="number" id="loyer" value="750" min="300" max="2000" step="50" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Charges annuelles (€)</label>
+                    <input type="number" id="charges" value="1800" min="500" max="5000" step="100" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Plus-value prévue (%)</label>
+                    <input type="number" id="plusvalue" value="5" min="-10" max="30" oninput="calculate()">
+                </div>
+            </div>
+
+            <div class="section-title" style="margin-top: 20px;">💰 Financement</div>
+            <div class="grid">
+                <div class="input-group">
+                    <label>Compte courant SARL (€)</label>
+                    <input type="number" id="cc" value="50000" min="0" max="150000" step="10000" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Ta part dans la SCI (%)</label>
+                    <input type="number" id="part" value="65" min="50" max="80" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Taux emprunt banque (%)</label>
+                    <input type="number" id="tauxBanque" value="4" min="1" max="8" step="0.1" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Durée location (ans)</label>
+                    <input type="number" id="duree" value="5" min="5" max="15" oninput="calculate()">
+                </div>
+            </div>
+        </div>
+
+        <div class="ciop-box">
+            <div class="ciop-header">
+                <div>
+                    <div class="ciop-label">CIOP récupéré (35%)</div>
+                    <div class="ciop-value" id="ciop-val">66 500 €</div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="ciop-label">Base éligible</div>
+                    <div style="font-size: 18px; font-weight: 600;" id="base-ciop">228 800 €</div>
+                </div>
+            </div>
+            <div class="ciop-sub">
+                Prix/m² : <span id="prix-m2">3 800 €</span> • Plafond CIOP 2026 : 3 575 €/m²
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-label">Rendement locatif</div>
+                <div class="stat-value" id="rendement">3.8%</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Emprunt bancaire</div>
+                <div class="stat-value" id="emprunt">73 500 €</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Loyer net/an</div>
+                <div class="stat-value" id="loyer-net">7 200 €</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Prix revente</div>
+                <div class="stat-value" id="prix-revente">199 500 €</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">📊 Bilan sur <span id="duree-affichage">5</span> ans</div>
+            <table class="finance-table">
+                <tr>
+                    <td>CIOP reçu</td>
+                    <td class="text-success" id="row-ciop">+66 500 €</td>
+                </tr>
+                <tr>
+                    <td>Loyers nets</td>
+                    <td class="text-success" id="row-loyers">+36 000 €</td>
+                </tr>
+                <tr>
+                    <td>Plus-value revente</td>
+                    <td class="text-success" id="row-pv">+9 500 €</td>
+                </tr>
+                <tr>
+                    <td>Intérêts compte courant (1%)</td>
+                    <td class="text-danger" id="row-int-cc">-2 500 €</td>
+                </tr>
+                <tr>
+                    <td>Intérêts banque</td>
+                    <td class="text-danger" id="row-int-banque">-8 820 €</td>
+                </tr>
+                <tr>
+                    <td>IS (25%)</td>
+                    <td class="text-danger" id="row-is">-8 400 €</td>
+                </tr>
+                <tr>
+                    <td>Flat tax (30%)</td>
+                    <td class="text-danger" id="row-flat">-27 534 €</td>
+                </tr>
+                <tr style="background: #f9f9f9; font-weight: 600;">
+                    <td>Net distribuable</td>
+                    <td id="row-net">64 746 €</td>
+                </tr>
+            </table>
+
+            <div class="result-grid">
+                <div class="result-box primary">
+                    <div class="result-label">Ta part (<span id="part-affichage">65</span>%)</div>
+                    <div class="result-value" id="result-nicolas">42 085 €</div>
+                    <div class="result-sub">Pour <span id="apport-nicolas">6 500</span> € investis</div>
+                </div>
+                <div class="result-box secondary">
+                    <div class="result-label">Part SARL (<span id="part-sarl-affichage">35</span>%)</div>
+                    <div class="result-value" id="result-sarl">22 661 €</div>
+                    <div class="result-sub">+ intérêts CC</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card conseils" id="conseils-box">
+            <div class="section-title">💡 Conseils</div>
+            <div id="conseils"></div>
+        </div>
+
+        <div class="footer">
+            Simulateur CIOP • Nicolas INCANA • Dispositif Art. 244 Quater W
+            <br><br>
+            <button class="btn-reset" onclick="resetDefaults()" style="margin: 0 auto;">
+                🔄 Réinitialiser les valeurs
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const PLAFOND_M2 = 3575;
+        const TAUX_CIOP = 0.35;
+        const TAUX_CC = 0.01;
+        const TAUX_IS = 0.25;
+        const TAUX_FLAT = 0.30;
+
+        function formatMoney(n) {
+            return Math.round(n).toLocaleString('fr-FR') + ' €';
+        }
+
+        function calculate() {
+            const prix = parseFloat(document.getElementById('prix').value) || 190000;
+            const surface = parseFloat(document.getElementById('surface').value) || 50;
+            const varangue = Math.min(parseFloat(document.getElementById('varangue').value) || 14, 14);
+            const loyer = parseFloat(document.getElementById('loyer').value) || 750;
+            const charges = parseFloat(document.getElementById('charges').value) || 1800;
+            const pv = parseFloat(document.getElementById('plusvalue').value) || 5;
+            const cc = parseFloat(document.getElementById('cc').value) || 50000;
+            const part = parseFloat(document.getElementById('part').value) || 65;
+            const tauxBanque = parseFloat(document.getElementById('tauxBanque').value) / 100 || 0.04;
+            const duree = parseFloat(document.getElementById('duree').value) || 5;
+
+            // Calculs CIOP
+            const surfaceEligible = surface + varangue;
+            const baseCIOP = Math.min(prix, surfaceEligible * PLAFOND_M2);
+            const ciop = Math.round(baseCIOP * TAUX_CIOP);
+            const prixM2 = Math.round(prix / surface);
+
+            // Financement
+            const besoin = prix - ciop;
+            const emprunt = Math.max(0, besoin - cc);
+
+            // Exploitation
+            const loyerAnnuel = loyer * 12;
+            const loyerNet = loyerAnnuel - charges;
+            const loyersTotal = loyerNet * duree;
+            const rendement = ((loyerNet / prix) * 100).toFixed(1);
+
+            // Revente
+            const prixRevente = Math.round(prix * (1 + pv / 100));
+            const plusValue = prixRevente - prix;
+
+            // Intérêts
+            const interetsCC = Math.round(cc * TAUX_CC * duree);
+            const interetsBanque = Math.round(emprunt * tauxBanque * duree * 0.6);
+            const totalInterets = interetsCC + interetsBanque;
+
+            // Résultat
+            const gainBrut = ciop + loyersTotal + plusValue - totalInterets;
+            const beneficeImposable = loyersTotal + plusValue - totalInterets;
+            const is = Math.round(Math.max(0, beneficeImposable) * TAUX_IS);
+            const gainApresIS = gainBrut - is;
+            const flatTax = Math.round(Math.max(0, gainApresIS) * TAUX_FLAT);
+            const gainNet = gainApresIS - flatTax;
+
+            // Parts
+            const gainNicolas = Math.round(gainNet * (part / 100));
+            const gainSARL = Math.round(gainNet * ((100 - part) / 100));
+            const apport = 10000 * (part / 100);
+            const roi = apport > 0 ? Math.round((gainNicolas / apport) * 100) : 0;
+
+            // Score
+            let score = 50;
+            if (ciop / prix >= 0.35) score += 15;
+            else if (ciop / prix >= 0.30) score += 10;
+            else if (ciop / prix >= 0.25) score += 5;
+            else score -= 10;
+
+            if (parseFloat(rendement) >= 5) score += 15;
+            else if (parseFloat(rendement) >= 4) score += 10;
+            else if (parseFloat(rendement) >= 3) score += 5;
+            else score -= 10;
+
+            if (prixM2 <= 3000) score += 10;
+            else if (prixM2 <= 3500) score += 5;
+            else if (prixM2 > 4000) score -= 10;
+
+            if (gainNicolas >= 50000) score += 10;
+            else if (gainNicolas >= 30000) score += 5;
+            else if (gainNicolas < 10000) score -= 15;
+
+            score = Math.max(0, Math.min(100, score));
+
+            // Verdict
+            let verdict, emoji, bgColor, textColor;
+            if (score >= 75) {
+                verdict = "EXCELLENT"; emoji = "🚀";
+                bgColor = "#d4edda"; textColor = "#155724";
+            } else if (score >= 60) {
+                verdict = "BON"; emoji = "✅";
+                bgColor = "#d4edda"; textColor = "#155724";
+            } else if (score >= 45) {
+                verdict = "MOYEN"; emoji = "⚠️";
+                bgColor = "#fff3cd"; textColor = "#856404";
+            } else if (score >= 30) {
+                verdict = "RISQUÉ"; emoji = "⚡";
+                bgColor = "#fff3cd"; textColor = "#856404";
+            } else {
+                verdict = "À ÉVITER"; emoji = "❌";
+                bgColor = "#f8d7da"; textColor = "#721c24";
+            }
+
+            // Mise à jour UI
+            const vb = document.getElementById('verdict-box');
+            vb.style.background = bgColor;
+            document.getElementById('verdict-emoji').textContent = emoji;
+            document.getElementById('verdict-text').textContent = verdict;
+            document.getElementById('verdict-text').style.color = textColor;
+            document.getElementById('verdict-score').textContent = "Score: " + score + "/100";
+            document.getElementById('gain-nicolas').textContent = formatMoney(gainNicolas);
+            document.getElementById('gain-nicolas').style.color = textColor;
+            document.getElementById('roi-display').textContent = "ROI: " + roi + "%";
+
+            document.getElementById('ciop-val').textContent = formatMoney(ciop);
+            document.getElementById('base-ciop').textContent = formatMoney(baseCIOP);
+            document.getElementById('prix-m2').textContent = formatMoney(prixM2).replace(' €', '');
+
+            document.getElementById('rendement').textContent = rendement + "%";
+            document.getElementById('rendement').style.color = parseFloat(rendement) >= 4 ? "#27ae60" : parseFloat(rendement) >= 3 ? "#f39c12" : "#e74c3c";
+            document.getElementById('emprunt').textContent = formatMoney(emprunt);
+            document.getElementById('loyer-net').textContent = formatMoney(loyerNet);
+            document.getElementById('prix-revente').textContent = formatMoney(prixRevente);
+
+            document.getElementById('duree-affichage').textContent = duree;
+            document.getElementById('row-ciop').textContent = "+" + formatMoney(ciop);
+            document.getElementById('row-loyers').textContent = "+" + formatMoney(loyersTotal);
+            document.getElementById('row-pv').textContent = "+" + formatMoney(plusValue);
+            document.getElementById('row-int-cc').textContent = "-" + formatMoney(interetsCC);
+            document.getElementById('row-int-banque').textContent = "-" + formatMoney(interetsBanque);
+            document.getElementById('row-is').textContent = "-" + formatMoney(is);
+            document.getElementById('row-flat').textContent = "-" + formatMoney(flatTax);
+            document.getElementById('row-net').textContent = formatMoney(gainNet);
+
+            document.getElementById('part-affichage').textContent = part;
+            document.getElementById('part-sarl-affichage').textContent = 100 - part;
+            document.getElementById('result-nicolas').textContent = formatMoney(gainNicolas);
+            document.getElementById('apport-nicolas').textContent = formatMoney(apport).replace(' €', '');
+            document.getElementById('result-sarl').textContent = formatMoney(gainSARL);
+
+            // Conseils
+            let conseils = [];
+            if (prixM2 > PLAFOND_M2) {
+                conseils.push('<div class="conseil" style="color: #e74c3c;">❌ Prix/m² (' + prixM2 + '€) dépasse le plafond CIOP (3 575 €) → tu perds du crédit d\'impôt !</div>');
+            } else {
+                conseils.push('<div class="conseil" style="color: #27ae60;">✅ Prix/m² (' + prixM2 + '€) dans le plafond CIOP</div>');
+            }
+
+            if (parseFloat(rendement) >= 4) {
+                conseils.push('<div class="conseil" style="color: #27ae60;">✅ Bon rendement locatif (' + rendement + '%)</div>');
+            } else if (parseFloat(rendement) >= 3) {
+                conseils.push('<div class="conseil" style="color: #f39c12;">⚠️ Rendement locatif moyen (' + rendement + '%) → négocie le prix ou augmente le loyer</div>');
+            } else {
+                conseils.push('<div class="conseil" style="color: #e74c3c;">❌ Rendement locatif faible (' + rendement + '%) → ce bien n\'est pas rentable</div>');
+            }
+
+            if (varangue < 14) {
+                conseils.push('<div class="conseil" style="color: #3498db;">💡 Varangue ' + varangue + ' m² - tu peux aller jusqu\'à 14 m² éligibles</div>');
+            }
+
+            if (ciop >= prix * 0.33) {
+                conseils.push('<div class="conseil" style="color: #27ae60;">✅ CIOP optimal (' + Math.round(ciop / prix * 100) + '% du prix récupéré)</div>');
+            }
+
+            if (gainNicolas >= 30000) {
+                conseils.push('<div class="conseil" style="color: #27ae60;">✅ Gain intéressant pour toi (' + formatMoney(gainNicolas) + ')</div>');
+            } else if (gainNicolas >= 15000) {
+                conseils.push('<div class="conseil" style="color: #f39c12;">⚠️ Gain correct mais pas exceptionnel (' + formatMoney(gainNicolas) + ')</div>');
+            } else {
+                conseils.push('<div class="conseil" style="color: #e74c3c;">❌ Gain trop faible (' + formatMoney(gainNicolas) + ') → cherche un meilleur bien</div>');
+            }
+
+            if (emprunt > 100000) {
+                conseils.push('<div class="conseil" style="color: #f39c12;">⚠️ Emprunt bancaire élevé (' + formatMoney(emprunt) + ') → assure-toi d\'avoir la caution SARL</div>');
+            }
+
+            document.getElementById('conseils').innerHTML = conseils.join('');
+        }
+
+        function resetDefaults() {
+            document.getElementById('prix').value = 190000;
+            document.getElementById('surface').value = 50;
+            document.getElementById('varangue').value = 14;
+            document.getElementById('loyer').value = 750;
+            document.getElementById('charges').value = 1800;
+            document.getElementById('plusvalue').value = 5;
+            document.getElementById('cc').value = 50000;
+            document.getElementById('part').value = 65;
+            document.getElementById('tauxBanque').value = 4;
+            document.getElementById('duree').value = 5;
+            calculate();
+        }
+
+        // Calcul initial
+        calculate();
+    </script>
+</body>
+</html>
